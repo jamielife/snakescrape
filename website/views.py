@@ -1,0 +1,73 @@
+import requests
+from bs4 import BeautifulSoup
+from .forms import CreateNew
+from django.shortcuts import render
+import openai, os
+from dotenv import load_dotenv
+
+#Instantiate dotenv
+load_dotenv()
+api_key = os.getenv('OPENAI_API_KEY')
+
+#Replace new lines with html breaks
+def nl2br(text):
+    return "<br>".join(text.splitlines())
+
+def home(request):
+    if request.method == 'POST':
+        form = CreateNew(request.POST)
+        if form.is_valid():
+            formData = [ form.cleaned_data['url'], form.cleaned_data['jobTitle'], form.cleaned_data['pageElement'], form.cleaned_data['pageClass'] ]
+        return render(request, "create.html", {'formData': formData })
+    else:
+        form = CreateNew()
+        return render(request, "home.html", {'form': form }) 
+
+def create(request):
+    if request.method == 'POST':
+        form = CreateNew(request.POST)
+        if form.is_valid():
+            url = form.cleaned_data['url']
+            jobTitle = form.cleaned_data['jobTitle']
+            formElem = form.cleaned_data['pageElement']
+            formClass = form.cleaned_data['pageClass']
+
+            try:
+                # Scrape the text from the website
+                response = requests.get(url, headers= {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36',
+                })
+                soup = BeautifulSoup(response.content, "html.parser")
+                
+                if formClass:
+                    text = soup.find(formElem,  {'class': formClass}).get_text()            
+                elif formElem:
+                    text = soup.find(formElem).get_text()
+                else:
+                    text = soup.find('body').get_text()
+
+                if api_key is not None:
+                    openai.api_key = api_key
+                    prompt = f"My name is Jamie Taylor. Strating with 'Dear Hiring Manager', write a cover letter that's at least 500 words long for the position of {jobTitle} based on the following company bio: '{text}'. Do not mention anything about enabling javascript or cookies. Do not mention a degree."
+
+                    response = openai.Completion.create(
+                        #engine="text-davinci-002",
+                        #engine="gpt-3.5-turbo-0613",
+                        model="gpt-3.5-turbo-instruct",
+                        prompt=prompt,
+                        temperature=0.5,
+                        max_tokens=1000,
+                    )
+
+                    chatbot_reponse = nl2br(response['choices'][0]['text'])
+
+                return render(request, "create.html", {'data': chatbot_reponse})
+                        
+            except ConnectionError as err:
+                return render(request, "home.html", {'form': form , 'error': err })
+            except requests.exceptions.RequestException as err:
+                return render(request, "home.html", {'form': form , 'error': err })
+
+    else:
+        form = CreateNew()
+        return render(request, "home.html", {'form': form , 'error': "URL not found or formatted improperly" })

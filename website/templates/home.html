@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block title %} Create New {% endblock %}
+
+{% block content %}
+
+    {% if error %}
+
+        <div class="alert alert-danger" role="alert">
+          {{ error }}
+        </div>    
+
+    {% endif %}
+
+    <div class="container">
+
+        <h1 class='text-center mt-4'>AI Cover Letter Generator</h1>
+
+        <form method="post" action="/create/" class="mx-auto mt-5">
+
+            {% csrf_token %}
+
+            {{form.as_p}}
+
+            <button type="submit" class="btn btn-primary mt-4" name="save">Create Cover Letter</button>
+
+        </form>
+
+        {% if formData %}
+            {{ formData }}
+        {% endif %}
+
+    </div>
+    <style type="text/css">
+        form{ width: 460px; }
+        form p { font-size: .9em; }
+        form p label { width: 20%; }
+        form p input { width: 79% }
+    </style>
+
+{% endblock %}
