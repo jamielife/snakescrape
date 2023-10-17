@@ -61,9 +61,10 @@ def create(request):
 
             if api_key is not None:
                 openai.api_key = api_key
-                prompt  = f"Starting with 'Dear Hiring Manager', write a cover letter that's at least 400 words long for the position of {jobTitle} for an appicant named James Taylor. " 
+                prompt  = f"Starting with 'Dear Hiring Manager', write a cover letter that's at least 400 words long for the position of {jobTitle}. " 
                 prompt2 = f"Use the following company bio to create the cover letter: '{text}'. "
                 prompt3 = "Do not mention, 'enabling javascript', 'cookies', or anything about a 'degree', 'Bachelor's degree' or 'Master's degree'. "
+                prompt4 = "Close the leter with 'Sincerly,' as 'James Taylor'."
 
                 # response = openai.Completion.create(
                 #     #engine="text-davinci-002",
@@ -72,13 +73,13 @@ def create(request):
                 #     prompt=prompt,
                 #     temperature=0.5,
                 #     max_tokens=1000,
-                # )
+                #)
 
                 response = openai.ChatCompletion.create(
                     model="gpt-4",
                     messages=[
                         {"role": "system", "content": "You are a helpful assistant."},
-                        {"role": "user", "content": prompt + prompt2 + prompt3 },
+                        {"role": "user", "content": prompt + prompt2 + prompt3 + prompt4 },
                     ]                    
                 )
 
