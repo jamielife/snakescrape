@@ -28,16 +28,23 @@ def create(request):
         form = CreateNew(request.POST)
         if form.is_valid():
             url = form.cleaned_data['url']
-            jobTitle = form.cleaned_data['jobTitle']
+            jobTitle = request.POST['jobTitle']
+            jobInfo = request.POST['jobInfo']
             formElem = form.cleaned_data['pageElement']
             formClass = form.cleaned_data['pageClass']
 
-            try:
-                # Scrape the text from the website
-                response = requests.get(url, headers= {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36',
-                })
-                soup = BeautifulSoup(response.content, "html.parser")
+            if url:
+                try:
+                    # Scrape the text from the website
+                    response = requests.get(url, headers= {
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36',
+                    })
+                    soup = BeautifulSoup(response.content, "html.parser")
+
+                except ConnectionError as err:
+                    return render(request, "home.html", {'form': form , 'error': err })
+                except requests.exceptions.RequestException as err:
+                    return render(request, "home.html", {'form': form , 'error': err })                    
                 
                 if formClass:
                     text = soup.find(formElem,  {'class': formClass}).get_text()            
@@ -46,27 +53,31 @@ def create(request):
                 else:
                     text = soup.find('body').get_text()
 
-                if api_key is not None:
-                    openai.api_key = api_key
-                    prompt = f"My name is Jamie Taylor. Strating with 'Dear Hiring Manager', write a cover letter that's at least 500 words long for the position of {jobTitle} based on the following company bio: '{text}'. Do not mention anything about enabling javascript or cookies. Do not mention a degree."
+            elif jobInfo:
+                    text = jobInfo
 
-                    response = openai.Completion.create(
-                        #engine="text-davinci-002",
-                        #engine="gpt-3.5-turbo-0613",
-                        model="gpt-3.5-turbo-instruct",
-                        prompt=prompt,
-                        temperature=0.5,
-                        max_tokens=1000,
-                    )
+            else:
+                return render(request, "home.html", {'form': form, 'error': "Either URL or Job Information is require. " })
 
-                    chatbot_reponse = nl2br(response['choices'][0]['text'])
+            if api_key is not None:
+                openai.api_key = api_key
+                prompt = f"My name is Jamie Taylor. Strating with 'Dear Hiring Manager', write a cover letter that's at least 500 words long for the position of {jobTitle}", 
+                f"based on the following company bio: '{text}'.",
+                f"Do not mention, 'enabling javascript', 'cookies', or anything about a 'degree', 'Bachelor's degree' or 'Master's degree'."
 
-                return render(request, "create.html", {'data': chatbot_reponse})
+                response = openai.Completion.create(
+                    #engine="text-davinci-002",
+                    #engine="gpt-3.5-turbo-0613",
+                    model="gpt-3.5-turbo-instruct",
+                    prompt=prompt,
+                    temperature=0.5,
+                    max_tokens=1000,
+                )
+
+                chatbot_reponse = nl2br(response['choices'][0]['text'])
+
+            return render(request, "create.html", {'data': chatbot_reponse})
                         
-            except ConnectionError as err:
-                return render(request, "home.html", {'form': form , 'error': err })
-            except requests.exceptions.RequestException as err:
-                return render(request, "home.html", {'form': form , 'error': err })
 
     else:
         form = CreateNew()
