@@ -70,6 +70,7 @@ def create(request):
                 prompt5 = f"Close the leter with 'Sincerely,' as '{fullname}'."
                 primary_prompt = prompt + prompt2 + prompt3 + prompt4 + prompt5
 
+                # https://platform.openai.com/docs/models
                 # response = openai.Completion.create(
                 #     #engine="text-davinci-002",
                 #     #engine="gpt-3.5-turbo-0613",
