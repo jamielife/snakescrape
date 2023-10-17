@@ -7,7 +7,9 @@ from dotenv import load_dotenv
 
 #Instantiate dotenv
 load_dotenv()
-api_key = os.getenv('OPENAI_API_KEY')
+api_key   = os.getenv('OPENAI_API_KEY')
+resume    = os.getenv('RESUME')
+fullname  = os.getenv('FULLNAME')
 
 #Replace new lines with html breaks
 def nl2br(text):
@@ -61,10 +63,12 @@ def create(request):
 
             if api_key is not None:
                 openai.api_key = api_key
-                prompt  = f"Starting with 'Dear Hiring Manager', write a cover letter that's at least 400 words long for the position of {jobTitle}. " 
-                prompt2 = f"Use the following company bio to create the cover letter: '{text}'. "
-                prompt3 = "Do not mention, 'enabling javascript', 'cookies', or anything about a 'degree', 'Bachelor's degree' or 'Master's degree'. "
-                prompt4 = "Close the leter with 'Sincerly,' as 'James Taylor'."
+                prompt  = f"Starting with 'Dear Hiring Manager', write a cover letter that's around 400 words long for the position of {jobTitle}. " 
+                prompt2 = f"Use requirements and responsibilities from the following company bio to create the cover letter: [{text}], "
+                prompt3 = f"cross referencing [{resume}] to apply relevant skills and experience to the cover letter. "
+                prompt4 = "Do not mention, 'enabling javascript', 'cookies', or anything about a 'degree', 'Bachelor's degree' or 'Master's degree'. "
+                prompt5 = f"Close the leter with 'Sincerely,' as '{fullname}'."
+                primary_prompt = prompt + prompt2 + prompt3 + prompt4 + prompt5
 
                 # response = openai.Completion.create(
                 #     #engine="text-davinci-002",
@@ -77,9 +81,10 @@ def create(request):
 
                 response = openai.ChatCompletion.create(
                     model="gpt-4",
+                    #model="gpt-3.5-turbo",
                     messages=[
                         {"role": "system", "content": "You are a helpful assistant."},
-                        {"role": "user", "content": prompt + prompt2 + prompt3 + prompt4 },
+                        {"role": "user", "content": primary_prompt },
                     ]                    
                 )
 
