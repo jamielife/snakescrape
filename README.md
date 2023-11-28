@@ -1,6 +1,6 @@
 # SnakeScrape AI 🐍
 
-Simpy Django web app that scrapes a specific page for content and sends the content to OpenAI for content creation.
+Simpy Django web app that scrapes a specific page for content and sends the content to OpenAI for content creation...
 
 ## Tech Stack
 
